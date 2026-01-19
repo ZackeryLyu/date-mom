@@ -1,0 +1,15 @@
+{
+  "short_name": "约了妈",
+  "name": "约了，妈",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/833/833472.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#db2777",
+  "background_color": "#fdf2f8"
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { Heart, Settings, CalendarHeart, Share2, Flame } from 'lucide-react';
+import { Heart, Settings, CalendarHeart, Share2, Flame, Smartphone } from 'lucide-react';
 import { format, isSameDay } from 'date-fns';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -191,6 +191,20 @@ export default function App() {
                 <p className="text-xs text-gray-400 mt-2 p-2 bg-gray-50 rounded">
                     {PERSONALITY_DESCRIPTIONS[state.personality]}
                 </p>
+
+                {/* Install Guide */}
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800 border border-blue-100">
+                    <h4 className="font-bold mb-2 flex items-center">
+                        <Smartphone className="w-4 h-4 mr-1" />
+                        如何安装到手机桌面？
+                    </h4>
+                    <div className="space-y-2 text-xs opacity-90">
+                        <p>1. 在 <strong>Safari</strong> 浏览器中打开本页面</p>
+                        <p>2. 点击底部中间的 <strong>分享按钮</strong> <Share2 className="w-3 h-3 inline" /></p>
+                        <p>3. 向下滑动，选择 <strong>"添加到主屏幕"</strong></p>
+                        <p className="text-blue-600 mt-1 opacity-100 font-medium">✨ 这样就可以像 App 一样全屏使用啦！</p>
+                    </div>
+                </div>
             </div>
         )}
 
