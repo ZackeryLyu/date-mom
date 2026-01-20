@@ -7,10 +7,8 @@ const MODEL_NAME = 'gemini-3-flash-preview';
 // Initialize Gemini Client Lazily
 const getAiClient = () => {
   // process.env.API_KEY is replaced by Vite at build time.
-  // We use a fallback empty string to prevent constructor error if replacement is missing,
-  // though it will fail when called if invalid.
-  const apiKey = process.env.API_KEY || "";
-  return new GoogleGenAI({ apiKey });
+  // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 /**

@@ -15,15 +15,15 @@ export class ErrorBoundary extends Component<Props, State> {
     error: null,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
         <div className="p-6 text-red-600 bg-red-50 min-h-screen flex flex-col items-center justify-center font-sans">
@@ -46,4 +46,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.
+    return this.props.children;
+  }
+}
