@@ -1,7 +1,7 @@
 {
   "name": "yue-le-ma",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^0.1.1",
+    "@google/genai": "*",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^3.6.0",
     "html2canvas": "^1.4.1",
