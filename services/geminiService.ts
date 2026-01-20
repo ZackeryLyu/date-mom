@@ -2,11 +2,16 @@ import { GoogleGenAI } from "@google/genai";
 import { MomPersonality } from "../types";
 import { PERSONALITY_DESCRIPTIONS } from "../constants";
 
-// Initialize Gemini Client
-// IMPORTANT: process.env.API_KEY is assumed to be available.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const MODEL_NAME = 'gemini-3-flash-preview';
+
+// Initialize Gemini Client Lazily
+const getAiClient = () => {
+  // process.env.API_KEY is replaced by Vite at build time.
+  // We use a fallback empty string to prevent constructor error if replacement is missing,
+  // though it will fail when called if invalid.
+  const apiKey = process.env.API_KEY || "";
+  return new GoogleGenAI({ apiKey });
+};
 
 /**
  * Generates a response from "Mom" based on her personality and the check-in event.
@@ -32,6 +37,7 @@ export const generateMomResponse = async (personality: MomPersonality, streak: n
   `;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
@@ -43,7 +49,7 @@ export const generateMomResponse = async (personality: MomPersonality, streak: n
     return response.text || "妈妈正在打麻将，没空回你（AI生成失败）";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "哎呀，妈妈的手机信号不好，刚才说什么来着？（网络错误）";
+    return "哎呀，妈妈的手机信号不好，刚才说什么来着？（请检查API Key设置）";
   }
 };
 
@@ -58,6 +64,7 @@ export const generateDateIdea = async (): Promise<string> => {
   `;
   
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,

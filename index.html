@@ -41,6 +41,10 @@
         background: #f472b6;
       }
     </style>
+    <script>
+      // Polyfill process for browser environment to prevent crashes in dependencies
+      window.process = window.process || { env: {} };
+    </script>
   <script type="importmap">
 {
   "imports": {
