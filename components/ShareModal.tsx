@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { X, Download, Copy, Share2, Loader2, Heart } from 'lucide-react';
+import { X, Copy, Share2, Loader2, Heart } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { toast } from 'react-hot-toast';
 
@@ -23,7 +23,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ streak, message, onClose
     });
   };
 
-  const handleDownloadImage = async () => {
+  const handleShare = async () => {
     if (!cardRef.current) return;
     setIsGenerating(true);
     try {
@@ -37,19 +37,34 @@ export const ShareModal: React.FC<ShareModalProps> = ({ streak, message, onClose
       });
 
       const image = canvas.toDataURL("image/png");
-      
-      // Create a temporary link to download
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `约了妈_打卡${streak}天.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('图片已生成！', { duration: 3000 });
-    } catch (err) {
-      console.error(err);
-      toast.error('生成图片失败，请直接截屏分享');
+      const blob = await (await fetch(image)).blob();
+      const file = new File([blob], `约了妈_打卡${streak}天.png`, { type: 'image/png' });
+
+      const shareData = {
+          title: '约了，妈',
+          text: `妈，我今天去约会了！连续打卡${streak}天。`,
+          files: [file]
+      };
+
+      // Check if Web Share API is supported and can share files
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+      } else {
+          // Fallback to download
+          const link = document.createElement("a");
+          link.href = image;
+          link.download = `约了妈_打卡${streak}天.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('图片已保存 (浏览器不支持直接分享)');
+      }
+    } catch (err: any) {
+      // Ignore abort errors (user cancelled share)
+      if (err.name !== 'AbortError') {
+          console.error(err);
+          toast.error('分享失败，请截图分享');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -122,12 +137,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({ streak, message, onClose
             <span className="text-xs">复制文字</span>
           </button>
           <button 
-            onClick={handleDownloadImage}
+            onClick={handleShare}
             disabled={isGenerating}
             className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-900 text-white font-medium hover:bg-black transition-all"
           >
-            {isGenerating ? <Loader2 className="w-6 h-6 mb-1 animate-spin" /> : <Download className="w-6 h-6 mb-1" />}
-            <span className="text-xs">保存图片</span>
+            {isGenerating ? <Loader2 className="w-6 h-6 mb-1 animate-spin" /> : <Share2 className="w-6 h-6 mb-1" />}
+            <span className="text-xs">分享</span>
           </button>
         </div>
       </div>
