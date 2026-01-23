@@ -1,18 +1,21 @@
+
 import React from 'react';
 import { CheckInRecord } from '../types';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Heart } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface HistoryListProps {
   history: CheckInRecord[];
+  darkMode?: boolean;
 }
 
-export const HistoryList: React.FC<HistoryListProps> = ({ history }) => {
+export const HistoryList: React.FC<HistoryListProps> = ({ history, darkMode = false }) => {
   if (history.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
-        <p>还没有约会记录，妈妈要急死了！</p>
+      <div className={`text-center py-12 rounded-xl mx-4 border border-dashed transition-colors ${darkMode ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-white border-gray-200 text-gray-400'}`}>
+        <p>还没有汇报记录</p>
+        <p className="text-xs mt-2">快去打卡让妈妈放心吧！</p>
       </div>
     );
   }
@@ -21,17 +24,20 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history }) => {
   const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
-    <div className="space-y-3 mt-4">
+    <div className="space-y-4 mt-2 px-2 pb-20">
       {sortedHistory.map((record) => (
-        <div key={record.id} className="bg-white p-4 rounded-xl border-l-4 border-pink-400 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-sm font-bold text-gray-700 bg-pink-50 px-2 py-1 rounded-md">
+        <div key={record.id} className={`p-4 rounded-xl shadow-sm border transition-colors ${darkMode ? 'bg-white/10 border-white/5 text-pink-50' : 'bg-white border-gray-100 text-gray-800'}`}>
+          <div className="flex justify-between items-center mb-3">
+            <span className={`text-xs font-medium px-2 py-1 rounded-md ${darkMode ? 'bg-white/10 text-pink-200/80' : 'bg-gray-50 text-gray-500'}`}>
               {format(record.timestamp, 'yyyy年MM月dd日 HH:mm', { locale: zhCN })}
             </span>
-            <Heart className="w-4 h-4 text-pink-500 fill-current" />
+            <div className={`flex items-center ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                <Send className="w-3 h-3 mr-1" />
+                <span className="text-xs">已发送</span>
+            </div>
           </div>
-          <div className="text-sm text-gray-600 italic border-l-2 border-gray-100 pl-3">
-             "妈妈：{record.momResponse}"
+          <div className={`p-3 rounded-lg text-sm leading-relaxed ${darkMode ? 'bg-black/20 text-white/90' : 'bg-green-50 text-gray-800'}`}>
+             {record.reportMessage}
           </div>
         </div>
       ))}

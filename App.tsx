@@ -1,12 +1,12 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { Heart, Settings, CalendarHeart, Share2, Flame, Smartphone } from 'lucide-react';
+import { Heart, CalendarHeart, Share2, Flame, Send, Moon, Sun } from 'lucide-react';
 import { format, isSameDay } from 'date-fns';
 import { Toaster, toast } from 'react-hot-toast';
 
-import { AppState, MomPersonality, CheckInRecord } from './types';
-import { APP_STORAGE_KEY, PERSONALITY_DESCRIPTIONS } from './constants';
-import { generateMomResponse } from './services/geminiService';
+import { AppState, CheckInRecord } from './types';
+import { APP_STORAGE_KEY, REPORT_SCRIPTS } from './constants';
 import { MomFeedback } from './components/MomFeedback';
 import { StatsChart } from './components/StatsChart';
 import { HistoryList } from './components/HistoryList';
@@ -16,14 +16,12 @@ const INITIAL_STATE: AppState = {
   streak: 0,
   lastCheckInDate: null,
   history: [],
-  personality: MomPersonality.NAGGING,
 };
 
 export default function App() {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [isCheckInLoading, setIsCheckInLoading] = useState(false);
-  const [currentResponse, setCurrentResponse] = useState<string>("");
-  const [showSettings, setShowSettings] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState<string>("");
   const [showShareModal, setShowShareModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'home' | 'history'>('home');
 
@@ -37,9 +35,9 @@ export default function App() {
         // If there's history, set the latest response to display
         if (parsed.history && parsed.history.length > 0) {
            const lastRec = parsed.history[parsed.history.length - 1];
-           // Only show if it was today, otherwise clear it to encourage new checkin
+           // Only show if it was today
            if (isSameDay(new Date(lastRec.timestamp), new Date())) {
-               setCurrentResponse(lastRec.momResponse);
+               setCurrentMessage(lastRec.reportMessage);
            }
         }
       } catch (e) {
@@ -58,14 +56,16 @@ export default function App() {
     return isSameDay(new Date(state.lastCheckInDate), new Date());
   }, [state.lastCheckInDate]);
 
+  const isDated = hasCheckedInToday();
+
   const handleCheckIn = async () => {
-    if (hasCheckedInToday()) {
-      toast("今天已经约过啦！要注意身体哦。", { icon: '🍵' });
+    if (isDated) {
+      toast("今天已经汇报过啦！专心约会吧。", { icon: '🌹' });
       return;
     }
 
     setIsCheckInLoading(true);
-    setCurrentResponse(""); // Clear previous while loading
+    setCurrentMessage(""); 
 
     // 1. Calculate streak
     const today = new Date();
@@ -86,15 +86,16 @@ export default function App() {
         newStreak = 1;
     }
 
-    // 2. Get AI Response
-    try {
-        const aiResponse = await generateMomResponse(state.personality, newStreak);
+    // 2. Pick Random Script
+    // 模拟网络延迟，增加仪式感
+    setTimeout(() => {
+        const randomMsg = REPORT_SCRIPTS[Math.floor(Math.random() * REPORT_SCRIPTS.length)];
         
         const newRecord: CheckInRecord = {
             id: crypto.randomUUID(),
             timestamp: Date.now(),
             dateStr: todayStr,
-            momResponse: aiResponse,
+            reportMessage: randomMsg,
             mood: 'happy'
         };
 
@@ -105,199 +106,198 @@ export default function App() {
             history: [...prev.history, newRecord]
         }));
         
-        setCurrentResponse(aiResponse);
+        setCurrentMessage(randomMsg);
+        setIsCheckInLoading(false);
         
         // Success effects
         confetti({
-            particleCount: 100,
-            spread: 70,
+            particleCount: 150,
+            spread: 100,
             origin: { y: 0.6 },
-            colors: ['#ec4899', '#f472b6', '#fbcfe8']
+            colors: ['#ec4899', '#8b5cf6', '#f43f5e']
         });
-        toast.success("打卡成功！妈妈收到了！");
+        toast.success("汇报成功！妈妈已收到！");
         
-        // Optional: Open share modal after successful check-in automatically
+        // Optional: Open share modal
         setTimeout(() => setShowShareModal(true), 1500);
-
-    } catch (error) {
-        toast.error("网络开小差了，请重试");
-    } finally {
-        setIsCheckInLoading(false);
-    }
+    }, 800);
   };
 
-  const togglePersonality = (p: MomPersonality) => {
-      setState(prev => ({ ...prev, personality: p }));
-      toast.success(`妈妈性格已切换为：${p}`);
-  };
-
-  const getLatestResponseForShare = () => {
-    if (currentResponse) return currentResponse;
+  const getLatestMessageForShare = () => {
+    if (currentMessage) return currentMessage;
     if (state.history.length > 0) {
-        return state.history[state.history.length - 1].momResponse;
+        return state.history[state.history.length - 1].reportMessage;
     }
-    return "快去约会，妈妈头发都白了！";
+    return "妈，我今天去约会了！";
   };
+
+  // --- Dynamic Styling based on Check-In Status ---
+  const containerClass = isDated 
+    ? "bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 text-pink-50" // Ambiguous (Dark/Romantic)
+    : "bg-pink-50 text-gray-800"; // Original (Pink/Rose)
+
+  const headerClass = isDated
+    ? "bg-transparent text-pink-200 border-pink-800/30"
+    : "bg-white/80 text-pink-600 border-pink-100";
+
+  const streakCardClass = isDated
+    ? "bg-white/10 backdrop-blur-md border border-white/20 text-white"
+    : "bg-white border border-pink-100 text-gray-800";
+
+  const streakNumberClass = isDated ? "text-pink-300" : "text-pink-500";
+  const streakIconBg = isDated ? "bg-pink-500/20" : "bg-pink-100";
+  const streakIconColor = isDated ? "text-pink-400" : "text-pink-500";
+
+  const buttonBaseClass = "relative w-64 h-64 rounded-full flex flex-col items-center justify-center shadow-2xl transition-all duration-700 transform active:scale-95 border-8";
+  
+  const buttonStyleClass = isDated
+    ? "bg-black/20 backdrop-blur-xl border-pink-500/50 shadow-[0_0_40px_rgba(236,72,153,0.6)]" // Ambiguous style
+    : "bg-gradient-to-br from-pink-100 to-rose-50 border-pink-200 shadow-pink-200 hover:border-pink-300"; // Original Pink style
+
+  const heartIconClass = isDated
+    ? "fill-pink-600 text-pink-600 animate-pulse drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]"
+    : "fill-white text-pink-300 drop-shadow-md";
+
+  const buttonTextClass = isDated 
+    ? "text-pink-200 drop-shadow-md text-3xl" 
+    : "text-pink-500 text-3xl";
+
+  const navClass = isDated
+    ? "bg-black/40 backdrop-blur-lg border-t border-white/10 text-gray-400"
+    : "bg-white/90 backdrop-blur border-t border-pink-100 text-gray-400";
+    
+  const navActiveColor = isDated ? "text-pink-400" : "text-pink-500";
 
   return (
-    <div className="min-h-screen bg-pink-50 flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden relative">
-      <Toaster position="top-center" />
+    <div className={`min-h-screen flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden relative transition-colors duration-1000 ${containerClass}`}>
+      <Toaster position="top-center" toastOptions={{
+          style: {
+            background: isDated ? '#333' : '#fff',
+            color: isDated ? '#fff' : '#333',
+          }
+      }} />
       
       {/* Share Modal */}
       {showShareModal && (
         <ShareModal 
             streak={state.streak} 
-            momResponse={getLatestResponseForShare()} 
+            message={getLatestMessageForShare()} 
             onClose={() => setShowShareModal(false)} 
         />
       )}
       
       {/* Header */}
-      <header className="bg-pink-600 text-white p-4 pt-8 flex justify-between items-center sticky top-0 z-10 shadow-md">
+      <header className={`p-4 pt-8 flex justify-center items-center sticky top-0 z-10 shadow-sm transition-colors duration-500 ${headerClass}`}>
         <div className="flex items-center space-x-2">
-            <Heart className="fill-current w-6 h-6 animate-pulse" />
+            <Heart className={`w-6 h-6 ${isDated ? 'fill-pink-600 text-pink-600' : 'fill-pink-500 text-pink-500'}`} />
             <h1 className="text-xl font-bold tracking-wider">约了，妈</h1>
         </div>
-        <button onClick={() => setShowSettings(!showSettings)} className="p-2 hover:bg-pink-700 rounded-full transition-colors">
-            <Settings className="w-5 h-5" />
-        </button>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 p-4 pb-24 overflow-y-auto scroll-smooth">
         
-        {/* Settings Modal/Panel */}
-        {showSettings && (
-            <div className="mb-6 bg-white rounded-xl p-4 shadow-lg border border-pink-200 animate-in slide-in-from-top-4 fade-in duration-300">
-                <h3 className="font-bold text-gray-700 mb-3 flex items-center">
-                    <Settings className="w-4 h-4 mr-2" />
-                    设置妈妈的性格
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                    {Object.values(MomPersonality).map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => togglePersonality(p)}
-                            className={`p-2 text-sm rounded-lg border transition-all ${
-                                state.personality === p 
-                                ? 'bg-pink-100 border-pink-500 text-pink-700 font-bold' 
-                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            {p}
-                        </button>
-                    ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-2 p-2 bg-gray-50 rounded">
-                    {PERSONALITY_DESCRIPTIONS[state.personality]}
-                </p>
-
-                {/* Install Guide */}
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800 border border-blue-100">
-                    <h4 className="font-bold mb-2 flex items-center">
-                        <Smartphone className="w-4 h-4 mr-1" />
-                        如何安装到手机桌面？
-                    </h4>
-                    <div className="space-y-2 text-xs opacity-90">
-                        <p>1. 在 <strong>Safari</strong> 浏览器中打开本页面</p>
-                        <p>2. 点击底部中间的 <strong>分享按钮</strong> <Share2 className="w-3 h-3 inline" /></p>
-                        <p>3. 向下滑动，选择 <strong>"添加到主屏幕"</strong></p>
-                        <p className="text-blue-600 mt-1 opacity-100 font-medium">✨ 这样就可以像 App 一样全屏使用啦！</p>
-                    </div>
-                </div>
-            </div>
-        )}
-
         {/* Tab Content */}
         {activeTab === 'home' ? (
-            <div className="flex flex-col items-center space-y-6">
+            <div className="flex flex-col items-center space-y-8 mt-4">
                 
                 {/* Streak Card */}
-                <div className="w-full bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-20">
-                        <Flame className="w-24 h-24" />
+                <div className={`w-full rounded-3xl p-6 shadow-sm relative overflow-hidden flex justify-between items-center transition-colors duration-500 ${streakCardClass}`}>
+                    <div>
+                        <p className={`text-xs font-medium mb-1 uppercase tracking-wide ${isDated ? 'text-pink-200/70' : 'text-gray-400'}`}>
+                            连续汇报天数
+                        </p>
+                        <div className="flex items-baseline space-x-1">
+                            <span className={`text-5xl font-black ${streakNumberClass}`}>{state.streak}</span>
+                            <span className={`text-sm ${isDated ? 'text-pink-200/50' : 'text-gray-400'}`}>天</span>
+                        </div>
                     </div>
-                    <p className="text-pink-100 font-medium mb-1">连续约会打卡</p>
-                    <div className="flex items-baseline space-x-1">
-                        <span className="text-5xl font-extrabold">{state.streak}</span>
-                        <span className="text-xl">天</span>
+                    <div className={`p-4 rounded-full ${streakIconBg}`}>
+                        <Flame className={`w-8 h-8 ${streakIconColor}`} />
                     </div>
-                    <p className="text-xs mt-2 text-pink-100 opacity-80">
-                        {state.streak > 3 ? "真的是情场高手！" : "再接再厉，不要让妈妈失望！"}
-                    </p>
                 </div>
 
                 {/* Main Action Button */}
-                <div className="relative group">
-                    <div className={`absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 ${hasCheckedInToday() ? 'hidden' : ''}`}></div>
+                <div className="relative group my-4">
                     <button 
                         onClick={handleCheckIn}
-                        disabled={isCheckInLoading || hasCheckedInToday()}
-                        className={`relative w-48 h-48 rounded-full flex flex-col items-center justify-center shadow-xl border-8 transition-all transform active:scale-95 ${
-                            hasCheckedInToday() 
-                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
-                            : 'bg-white border-pink-100 hover:border-pink-300 text-pink-600'
-                        }`}
+                        disabled={isCheckInLoading || isDated}
+                        className={`${buttonBaseClass} ${buttonStyleClass}`}
                     >
                         {isCheckInLoading ? (
-                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-current opacity-70"></div>
                         ) : (
                             <>
-                                <Heart className={`w-16 h-16 mb-2 ${hasCheckedInToday() ? 'fill-gray-300' : 'fill-pink-500 animate-bounce'}`} />
-                                <span className="text-lg font-bold">
-                                    {hasCheckedInToday() ? "今日已约" : "妈，我约了"}
+                                <Heart className={`w-28 h-28 mb-4 transition-all duration-500 ${heartIconClass}`} />
+                                <span className={`font-black tracking-widest ${buttonTextClass}`}>
+                                    {isDated ? "约了！妈" : "约会去"}
                                 </span>
-                                {!hasCheckedInToday() && <span className="text-xs text-pink-400 mt-1">点击打卡</span>}
+                                <span className={`text-xs mt-2 font-medium tracking-wide ${isDated ? "text-pink-300/60" : "text-pink-400/80"}`}>
+                                    {isDated ? "今日任务已完成" : "点击这里让妈妈放心"}
+                                </span>
                             </>
                         )}
                     </button>
+                    {/* Glow effect for Ambiguous mode */}
+                    {isDated && (
+                        <div className="absolute inset-0 rounded-full bg-pink-500 opacity-20 blur-3xl -z-10 animate-pulse"></div>
+                    )}
                 </div>
 
-                {/* AI Mom Response */}
-                {(currentResponse || isCheckInLoading) && (
-                    <MomFeedback response={currentResponse} isLoading={isCheckInLoading} />
+                {/* Display the User's Message */}
+                {(currentMessage || isCheckInLoading) && (
+                    <MomFeedback 
+                        message={currentMessage} 
+                        isLoading={isCheckInLoading} 
+                        darkMode={isDated} 
+                    />
                 )}
 
                  {/* Stats Chart */}
-                 <StatsChart history={state.history} />
+                 <div className={`w-full rounded-2xl p-2 ${isDated ? 'bg-white/5 border border-white/10' : 'bg-white'}`}>
+                    <StatsChart history={state.history} darkMode={isDated} />
+                 </div>
 
             </div>
         ) : (
             <div className="animate-in fade-in duration-300">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 px-2">约会光荣榜</h2>
-                <HistoryList history={state.history} />
+                <h2 className={`text-xl font-bold mb-4 px-2 flex items-center ${isDated ? 'text-white' : 'text-gray-800'}`}>
+                    <Send className={`w-5 h-5 mr-2 ${isDated ? 'text-pink-400' : 'text-pink-500'}`} />
+                    汇报记录
+                </h2>
+                <HistoryList history={state.history} darkMode={isDated} />
             </div>
         )}
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-200 flex justify-around items-center p-2 z-20 pb-safe">
+      <nav className={`${navClass} fixed bottom-0 w-full max-w-md flex justify-around items-center p-2 z-20 pb-safe transition-colors duration-500`}>
         <button 
             onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center p-2 rounded-xl w-20 transition-colors ${activeTab === 'home' ? 'text-pink-600 bg-pink-50' : 'text-gray-400'}`}
+            className={`flex flex-col items-center p-2 rounded-xl w-20 transition-colors ${activeTab === 'home' ? navActiveColor : 'text-gray-400'}`}
         >
             <CalendarHeart className="w-6 h-6" />
-            <span className="text-xs mt-1 font-medium">今天</span>
+            <span className="text-xs mt-1 font-medium">打卡</span>
         </button>
         
         <button 
              onClick={() => setShowShareModal(true)}
-             className="absolute -top-6 bg-pink-600 text-white p-4 rounded-full shadow-lg border-4 border-pink-50 hover:bg-pink-700 transition-transform hover:scale-105 active:scale-95 group"
+             className={`absolute -top-6 p-4 rounded-full shadow-lg border-4 hover:scale-105 transition-transform ${isDated ? 'bg-pink-600 border-indigo-900 text-white' : 'bg-gray-900 text-white border-pink-50'}`}
         >
-             <Share2 className="w-6 h-6 group-hover:animate-wiggle" />
+             <Share2 className="w-6 h-6" />
         </button>
 
         <button 
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center p-2 rounded-xl w-20 transition-colors ${activeTab === 'history' ? 'text-pink-600 bg-pink-50' : 'text-gray-400'}`}
+            className={`flex flex-col items-center p-2 rounded-xl w-20 transition-colors ${activeTab === 'history' ? navActiveColor : 'text-gray-400'}`}
         >
-            <Heart className="w-6 h-6" />
+            <Send className="w-6 h-6" />
             <span className="text-xs mt-1 font-medium">记录</span>
         </button>
       </nav>
       
       {/* Safe area padding for bottom nav on mobile */}
-      <div className="h-6 w-full bg-white md:hidden"></div>
+      <div className={`h-6 w-full md:hidden ${isDated ? 'bg-black/40' : 'bg-white'}`}></div>
     </div>
   );
 }
