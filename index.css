@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lock the viewport completely to prevent scrolling/bouncing */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  touch-action: none; /* Disable default touch actions globally */
+}
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background-color: #fdf2f8; /* pink-50 */
+  overscroll-behavior: none;
+  -webkit-user-select: none; /* Disable text selection for app-like feel */
+  user-select: none;
+  /* Ensure background covers the safe area if viewport-fit=cover leaves gaps */
+  min-height: 100vh; 
+  min-height: -webkit-fill-available;
+}
+
+/* Allow vertical scrolling only where explicitly enabled */
+.touch-pan-y {
+  touch-action: pan-y !important;
+}
+
+/* Safe area padding utility */
+.pb-safe {
+  /* Increased base padding to 24px to ensure buttons are well above the home indicator */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #fbcfe8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f472b6;
+}

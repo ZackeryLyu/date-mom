@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckInRecord } from '../types';
 import { format } from 'date-fns';
@@ -23,8 +22,9 @@ export const HistoryList: React.FC<HistoryListProps> = ({ history, darkMode = fa
   // Sort by date desc
   const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
 
+  // Increased bottom padding to pb-32 to clear the taller safe-area footer
   return (
-    <div className="space-y-4 mt-2 px-2 pb-20">
+    <div className="space-y-4 mt-2 px-2 pb-32">
       {sortedHistory.map((record) => (
         <div key={record.id} className={`p-4 rounded-xl shadow-sm border transition-colors ${darkMode ? 'bg-white/10 border-white/5 text-pink-50' : 'bg-white border-gray-100 text-gray-800'}`}>
           <div className="flex justify-between items-center mb-3">
